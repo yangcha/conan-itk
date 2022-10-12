@@ -43,7 +43,7 @@ conan export-pkg . user/testing --source-folder=tmp/source --build-folder=tmp/bu
 You can also test the package that was just exported
 
 ```
-conan test test_package Hello/1.0@user/testing
+conan test test_package itk/5.2.1@user/testing
 ```
 
 7. Finally, run a full create, does all of the above + test_package
