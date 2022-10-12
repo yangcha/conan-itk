@@ -1,6 +1,6 @@
 # conan-itk
 
-ITK C++ libraries installed with Conan C/C++ package manager.
+[ITK](https://itk.org/) C++ libraries installed with Conan C/C++ package manager.
 
 Mostly used to run the conan.io getting started: https://docs.conan.io/en/latest/getting_started.html
 
