@@ -32,8 +32,6 @@ conan package . --source-folder=tmp/source --build-folder=tmp/build --package-fo
 
 5. Export it:
 
-Use --force to prevent ERROR: Package already exists
-
 ```
 conan export-pkg . user/testing --source-folder=tmp/source --build-folder=tmp/build --force
 ```
