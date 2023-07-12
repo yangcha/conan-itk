@@ -1,4 +1,5 @@
-from conan import ConanFile
+import os
+from conan import ConanFile, tools
 from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 from conan.tools.files import apply_conandata_patches, export_conandata_patches, collect_libs, copy, get
@@ -29,7 +30,6 @@ class ITKConan(ConanFile):
     short_paths = True
 
     def export_sources(self):
-        self.copy("CMakeLists.txt")
         export_conandata_patches(self)
 
     def config_options(self):
@@ -91,9 +91,10 @@ class ITKConan(ConanFile):
         cmake.build()
 
     def package(self):
-        self.copy("LICENSE", dst="licenses", src=self._source_subfolder)
         cmake = CMake(self)
         cmake.install()
+
+        copy(self, "LICENSE", self.source_folder, os.path.join(self.package_folder, "licenses"))
 
     @property
     def _cmake_module_dir(self):
@@ -101,7 +102,7 @@ class ITKConan(ConanFile):
 
     @property
     def _itk_subdir(self):
-        v = tools.Version(self.version)
+        v = tools.scm.Version(self.version)
         return "ITK-{}.{}".format(v.major, v.minor)
 
     def package_info(self):
@@ -111,4 +112,4 @@ class ITKConan(ConanFile):
         self.cpp_info.names["cmake_find_package"] = "ITK"
         self.cpp_info.names["cmake_find_package_multi"] = "ITK"
         self.cpp_info.includedirs = [os.path.join('include', self._itk_subdir)]
-        self.cpp_info.libs = tools.collect_libs(self)
+        self.cpp_info.libs = tools.files.collect_libs(self)
