@@ -6,46 +6,38 @@ Mostly used to run the conan.io getting started: https://docs.conan.io/en/latest
 
 ## Compiling steps
 
+Change directory to the this folder.
+
+
 1.  Outputs the source files into the source-folder:
 
 ```
-conan source  . --source-folder=tmp/source
+conan source .
 ```
 
 2. Install dependencies:
 
 ```
-conan install . --install-folder=tmp/build
+conan install .
 ```
 
 3.  Build it:
 
 ```
-conan build   . --source-folder=tmp/source --build-folder=tmp/build
+conan build .
 ```
 
-4. Package it:
+4. Package and export it:
 
 ```
-conan package . --source-folder=tmp/source --build-folder=tmp/build --package-folder=tmp/package
+conan export-pkg .
 ```
 
-5. Export it:
-
-```
-conan export-pkg . user/testing --source-folder=tmp/source --build-folder=tmp/build --force
-```
-
-6. Test it:
+5. Test it:
 
 You can also test the package that was just exported
 
 ```
-conan test test_package itk/5.2.1@user/testing
+conan test test_package itk/5.3.0@user/testing
 ```
 
-7. Finally, run a full create, does all of the above + test_package
-
-```
-conan create . user/testing
-```

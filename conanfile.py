@@ -1,20 +1,21 @@
-import os
+from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
+from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
+from conan.tools.files import apply_conandata_patches, export_conandata_patches, collect_libs, copy, get
 
-from conans import ConanFile, CMake, tools
-from conans.errors import ConanInvalidConfiguration
-
-required_conan_version = ">=1.43.0"
+required_conan_version = ">=1.54.0"
 
 
 class ITKConan(ConanFile):
     name = "itk"
-    version = "5.2.1"
+    version = "5.3.0"
     topics = ("itk", "scientific", "image", "processing")
     homepage = "http://www.itk.org/"
     url = "https://github.com/conan-io/conan-center-index"
     license = "Apache-2.0"
     description = "Insight Segmentation and Registration Toolkit"
 
+    package_type = "library"
     settings = "os", "arch", "compiler", "build_type"
     options = {
         "shared": [True, False],
@@ -26,21 +27,10 @@ class ITKConan(ConanFile):
     }
 
     short_paths = True
-    generators = "cmake"
-    _cmake = None
-
-    @property
-    def _source_subfolder(self):
-        return "source_subfolder"
-
-    @property
-    def _build_subfolder(self):
-        return "build_subfolder"
 
     def export_sources(self):
         self.copy("CMakeLists.txt")
-        for patch in self.conan_data.get("patches", {}).get(self.version, []):
-            self.copy(patch["patch_file"])
+        export_conandata_patches(self)
 
     def config_options(self):
         if self.settings.os == "Windows":
@@ -48,7 +38,9 @@ class ITKConan(ConanFile):
 
     def configure(self):
         if self.options.shared:
-            del self.options.fPIC
+            self.options.rm_safe("fPIC")
+        self.settings.rm_safe("compiler.cppstd")
+        self.settings.rm_safe("compiler.libcxx")
 
     @property
     def _minimum_cpp_standard(self):
@@ -68,7 +60,7 @@ class ITKConan(ConanFile):
             tools.check_min_cppstd(self, self._minimum_cpp_standard)
         min_version = self._minimum_compilers_version.get(str(self.settings.compiler))
         if not min_version:
-            self.output.warn("{} recipe lacks information about the {} compiler support.".format(
+            self.output.warning("{} recipe lacks information about the {} compiler support.".format(
                 self.name, self.settings.compiler))
         else:
             if tools.Version(self.settings.compiler.version) < min_version:
@@ -78,36 +70,29 @@ class ITKConan(ConanFile):
                                                                      self.settings.compiler,
                                                                      self.settings.compiler.version))
 
+    def layout(self):
+        cmake_layout(self, src_folder="src")
+
     def source(self):
-        tools.get(**self.conan_data["sources"][self.version],
-                  destination=self._source_subfolder, strip_root=True)
+        get(self, **self.conan_data["sources"][self.version], strip_root=True)
 
-    def _patch_sources(self):
-        for patch in self.conan_data.get("patches", {}).get(self.version, []):
-            tools.patch(**patch)
-
-    def _configure_cmake(self):
-        if self._cmake:
-            return self._cmake
-
-        self._cmake = CMake(self)
-        self._cmake.definitions["BUILD_EXAMPLES"] = False
-        self._cmake.definitions["BUILD_TESTING"] = False
-        self._cmake.definitions["BUILD_DOCUMENTATION"] = False
-        self._cmake.definitions["ITK_SKIP_PATH_LENGTH_CHECKS"] = True
-
-        self._cmake.configure(source_folder=self._source_subfolder,
-                              build_folder=self._build_subfolder)
-        return self._cmake
+    def generate(self):
+        tc = CMakeToolchain(self)
+        tc.variables["BUILD_EXAMPLES"] = False
+        tc.variables["BUILD_TESTING"] = False
+        tc.variables["BUILD_DOCUMENTATION"] = False
+        tc.variables["ITK_SKIP_PATH_LENGTH_CHECKS"] = True
+        tc.generate()
 
     def build(self):
-        self._patch_sources()
-        cmake = self._configure_cmake()
+        apply_conandata_patches(self)
+        cmake = CMake(self)
+        cmake.configure()
         cmake.build()
 
     def package(self):
         self.copy("LICENSE", dst="licenses", src=self._source_subfolder)
-        cmake = self._configure_cmake()
+        cmake = CMake(self)
         cmake.install()
 
     @property
